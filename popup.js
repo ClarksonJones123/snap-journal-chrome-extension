@@ -1,8 +1,12 @@
 /**
  * Snap Journal - Popup Script
  * Handles popup interface and user interactions
- * Version: 2.0.1
+ * Version: 2.0.1-DEBUG
  */
+
+// Debug: Verify script is loading
+console.log('🚀 POPUP.JS LOADING - DEBUG VERSION');
+console.log('🕐 Timestamp:', new Date().toISOString());
 
 // DOM elements
 let elements = {};
