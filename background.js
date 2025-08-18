@@ -73,11 +73,38 @@ chrome.action.onClicked.addListener(async (tab) => {
 // Handle regular webpage screenshots
 async function handleRegularPageScreenshot(tab) {
   try {
+    console.log('📷 Capturing visible tab for regular page...');
+    console.log('Tab details:', { windowId: tab.windowId, url: tab.url });
+    console.log('Browser info:', navigator.userAgent);
+    
+    // Check if we're in Edge
+    const isEdge = navigator.userAgent.includes('Edg/');
+    console.log('🌐 Running in Edge:', isEdge);
+    
     // Use chrome.tabs.captureVisibleTab for all pages
-    const screenshotDataUrl = await chrome.tabs.captureVisibleTab(
-      tab.windowId,
-      { format: 'png', quality: 100 }
-    );
+    let screenshotDataUrl;
+    try {
+      screenshotDataUrl = await chrome.tabs.captureVisibleTab(
+        tab.windowId,
+        { format: 'png', quality: 100 }
+      );
+      console.log('✅ Screenshot captured, data URL length:', screenshotDataUrl.length);
+    } catch (captureError) {
+      console.error('❌ captureVisibleTab failed:', captureError);
+      
+      // Try without windowId for Edge compatibility
+      try {
+        console.log('🔄 Retrying without windowId...');
+        screenshotDataUrl = await chrome.tabs.captureVisibleTab(
+          null,
+          { format: 'png', quality: 100 }
+        );
+        console.log('✅ Screenshot captured on retry, data URL length:', screenshotDataUrl.length);
+      } catch (retryError) {
+        console.error('❌ Retry also failed:', retryError);
+        throw new Error(`Screenshot capture failed: ${captureError.message}`);
+      }
+    }
     
     // Store screenshot data
     const screenshotData = {
@@ -127,11 +154,33 @@ async function handleRegularPageScreenshot(tab) {
 // Handle special pages (Chrome internal, etc.)
 async function handleSpecialPageScreenshot(tab) {
   try {
+    console.log('🔧 Capturing visible tab for special page...');
+    console.log('Special page details:', { windowId: tab.windowId, url: tab.url });
+    
     // Use chrome.tabs.captureVisibleTab for special pages
-    const screenshotDataUrl = await chrome.tabs.captureVisibleTab(
-      tab.windowId,
-      { format: 'png', quality: 100 }
-    );
+    let screenshotDataUrl;
+    try {
+      screenshotDataUrl = await chrome.tabs.captureVisibleTab(
+        tab.windowId,
+        { format: 'png', quality: 100 }
+      );
+      console.log('✅ Special page screenshot captured, data URL length:', screenshotDataUrl.length);
+    } catch (captureError) {
+      console.error('❌ Special page captureVisibleTab failed:', captureError);
+      
+      // Try without windowId for Edge compatibility
+      try {
+        console.log('🔄 Retrying special page without windowId...');
+        screenshotDataUrl = await chrome.tabs.captureVisibleTab(
+          null,
+          { format: 'png', quality: 100 }
+        );
+        console.log('✅ Special page screenshot captured on retry, data URL length:', screenshotDataUrl.length);
+      } catch (retryError) {
+        console.error('❌ Special page retry also failed:', retryError);
+        throw new Error(`Special page screenshot capture failed: ${captureError.message}`);
+      }
+    }
     
     // Store screenshot data
     const screenshotData = {
@@ -180,11 +229,20 @@ async function handleSpecialPageScreenshot(tab) {
 
 // Message handling from content scripts and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('🎯 Background received message:', message);
+  
   switch (message.action) {
     case 'captureScreenshot':
+      console.log('📸 Processing captureScreenshot request for tab:', message.tabId);
       handleCaptureScreenshotFromPopup(message.tabId)
-        .then(result => sendResponse({ success: true, data: result }))
-        .catch(error => sendResponse({ success: false, error: error.message }));
+        .then(result => {
+          console.log('✅ Screenshot capture successful, sending response:', result);
+          sendResponse({ success: true, data: result });
+        })
+        .catch(error => {
+          console.error('❌ Screenshot capture failed in background:', error);
+          sendResponse({ success: false, error: error.message });
+        });
       return true; // Keep message channel open for async response
       
     case 'saveScreenshot':
@@ -498,12 +556,17 @@ async function generatePDF(screenshot, options) {
 // Handle screenshot capture from popup
 async function handleCaptureScreenshotFromPopup(tabId) {
   try {
+    console.log('🔍 Getting tab information for ID:', tabId);
+    
     // Get tab information
     const tab = await chrome.tabs.get(tabId);
     
     if (!tab) {
+      console.error('❌ Tab not found for ID:', tabId);
       throw new Error('Tab not found');
     }
+    
+    console.log('✅ Tab found:', { id: tab.id, url: tab.url, title: tab.title });
     
     // Check if we can access the tab
     if (tab.url.startsWith('chrome://') || 
@@ -511,17 +574,21 @@ async function handleCaptureScreenshotFromPopup(tabId) {
         tab.url.startsWith('edge://') ||
         tab.url.startsWith('about:')) {
       
+      console.log('🔧 Handling special page screenshot');
       // Handle special pages with different approach
-      await handleSpecialPageScreenshot(tab);
+      const result = await handleSpecialPageScreenshot(tab);
+      console.log('✅ Special page screenshot result:', result);
+      return result;
     } else {
+      console.log('🌐 Handling regular page screenshot');
       // Handle regular pages
-      await handleRegularPageScreenshot(tab);
+      const result = await handleRegularPageScreenshot(tab);
+      console.log('✅ Regular page screenshot result:', result);
+      return result;
     }
     
-    return { success: true, message: 'Screenshot captured successfully' };
-    
   } catch (error) {
-    console.error('Screenshot capture from popup failed:', error);
+    console.error('💥 Screenshot capture from popup failed:', error);
     throw error;
   }
 }

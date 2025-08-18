@@ -233,30 +233,45 @@ async function loadStatistics() {
 // Handle capture screenshot
 async function handleCaptureScreenshot() {
   try {
+    console.log('🚀 Starting screenshot capture...');
     showLoading('Capturing screenshot...');
     
     // Get current tab
+    console.log('📋 Getting current tab...');
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     
     if (!tab) {
+      console.error('❌ No active tab found');
       throw new Error('No active tab found');
     }
     
+    console.log('✅ Found active tab:', { id: tab.id, url: tab.url, title: tab.title });
+    
     // Trigger screenshot capture
+    console.log('📤 Sending message to background script...');
     const response = await chrome.runtime.sendMessage({
       action: 'captureScreenshot',
       tabId: tab.id
     });
     
+    console.log('📥 Received response from background:', response);
+    
     if (response && response.success) {
+      console.log('✅ Screenshot capture successful!');
       hideLoading();
       window.close(); // Close popup after successful capture
     } else {
-      throw new Error(response?.error || 'Screenshot capture failed');
+      console.error('❌ Screenshot capture failed - invalid response:', response);
+      throw new Error(response?.error || 'Screenshot capture failed - no success response');
     }
     
   } catch (error) {
-    console.error('Screenshot capture failed:', error);
+    console.error('💥 Screenshot capture failed:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     hideLoading();
     showError('Screenshot capture failed: ' + error.message);
   }
