@@ -15,6 +15,7 @@ async function initializePopup() {
   try {
     // Get DOM elements
     elements = {
+      testBtn: document.getElementById('test-btn'),
       captureBtn: document.getElementById('capture-btn'),
       galleryBtn: document.getElementById('gallery-btn'),
       settingsBtn: document.getElementById('settings-btn'),
@@ -86,6 +87,7 @@ async function initializePopup() {
 // Set up event listeners
 function setupEventListeners() {
   // Main action buttons
+  elements.testBtn.addEventListener('click', handleTestConnection);
   elements.captureBtn.addEventListener('click', handleCaptureScreenshot);
   elements.galleryBtn.addEventListener('click', handleShowGallery);
   elements.settingsBtn.addEventListener('click', handleShowSettings);
@@ -227,6 +229,33 @@ async function loadStatistics() {
     elements.totalScreenshots.textContent = '0';
     elements.totalAnnotations.textContent = '0';
     elements.totalExports.textContent = '0';
+  }
+}
+
+// Handle test connection
+async function handleTestConnection() {
+  try {
+    console.log('🧪 Testing connection to background script...');
+    showLoading('Testing connection...');
+    
+    const response = await chrome.runtime.sendMessage({
+      action: 'ping'
+    });
+    
+    console.log('🧪 Test response:', response);
+    
+    if (response && response.success) {
+      hideLoading();
+      showError('✅ Connection successful! Background script is responding.', 'success');
+    } else {
+      hideLoading();
+      showError('❌ Connection failed: No response from background script');
+    }
+    
+  } catch (error) {
+    console.error('🧪 Test connection failed:', error);
+    hideLoading();
+    showError('❌ Connection test failed: ' + error.message);
   }
 }
 

@@ -185,6 +185,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('🎯 Background received message:', message);
   
   switch (message.action) {
+    case 'ping':
+      console.log('🏓 Ping received from popup');
+      const browserInfo = getBrowserInfo();
+      sendResponse({ 
+        success: true, 
+        message: 'Background script is alive!',
+        browser: browserInfo.name,
+        version: browserInfo.version,
+        timestamp: new Date().toISOString()
+      });
+      return false; // Synchronous response
+      
     case 'captureScreenshot':
       console.log('📸 Processing captureScreenshot request for tab:', message.tabId);
       handleCaptureScreenshotFromPopup(message.tabId)
