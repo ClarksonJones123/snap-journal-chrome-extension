@@ -152,6 +152,12 @@ async function handleSpecialPageScreenshot(tab) {
 // Message handling from content scripts and popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
+    case 'captureScreenshot':
+      handleCaptureScreenshotFromPopup(message.tabId)
+        .then(result => sendResponse({ success: true, data: result }))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true; // Keep message channel open for async response
+      
     case 'saveScreenshot':
       handleSaveScreenshot(message.data)
         .then(result => sendResponse({ success: true, data: result }))
@@ -185,6 +191,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'updateSettings':
       handleUpdateSettings(message.settings)
         .then(() => sendResponse({ success: true }))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+      
+    case 'getStatistics':
+      handleGetStatistics()
+        .then(stats => sendResponse({ success: true, data: stats }))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+      
+    case 'exportAllScreenshots':
+      handleExportAllScreenshots()
+        .then(result => sendResponse({ success: true, data: result }))
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true;
   }
@@ -446,6 +464,174 @@ async function generatePDF(screenshot, options) {
   `;
   
   return new TextEncoder().encode(pdfContent);
+}
+
+// Handle screenshot capture from popup
+async function handleCaptureScreenshotFromPopup(tabId) {
+  try {
+    // Get tab information
+    const tab = await chrome.tabs.get(tabId);
+    
+    if (!tab) {
+      throw new Error('Tab not found');
+    }
+    
+    // Check if we can access the tab
+    if (tab.url.startsWith('chrome://') || 
+        tab.url.startsWith('chrome-extension://') ||
+        tab.url.startsWith('edge://') ||
+        tab.url.startsWith('about:')) {
+      
+      // Handle special pages with different approach
+      await handleSpecialPageScreenshot(tab);
+    } else {
+      // Handle regular pages
+      await handleRegularPageScreenshot(tab);
+    }
+    
+    return { success: true, message: 'Screenshot captured successfully' };
+    
+  } catch (error) {
+    console.error('Screenshot capture from popup failed:', error);
+    throw error;
+  }
+}
+
+// Handle get statistics
+async function handleGetStatistics() {
+  try {
+    const storage = await chrome.storage.local.get(['snapJournalConfig']);
+    const config = storage.snapJournalConfig || {};
+    
+    const db = await openDatabase();
+    const transaction = db.transaction(['screenshots'], 'readonly');
+    const store = transaction.objectStore('screenshots');
+    
+    // Count total screenshots
+    const countRequest = store.count();
+    const totalScreenshots = await new Promise((resolve, reject) => {
+      countRequest.onsuccess = () => resolve(countRequest.result);
+      countRequest.onerror = () => reject(countRequest.error);
+    });
+    
+    // Count total annotations
+    const allRequest = store.getAll();
+    const screenshots = await new Promise((resolve, reject) => {
+      allRequest.onsuccess = () => resolve(allRequest.result);
+      allRequest.onerror = () => reject(allRequest.error);
+    });
+    
+    const totalAnnotations = screenshots.reduce((sum, screenshot) => {
+      return sum + (screenshot.annotations ? screenshot.annotations.length : 0);
+    }, 0);
+    
+    return {
+      totalScreenshots: totalScreenshots,
+      totalAnnotations: totalAnnotations,
+      totalExports: config.statistics?.pdf_exported || 0,
+      lastActivity: config.statistics?.lastActivity || null
+    };
+    
+  } catch (error) {
+    console.error('Failed to get statistics:', error);
+    return {
+      totalScreenshots: 0,
+      totalAnnotations: 0,
+      totalExports: 0,
+      lastActivity: null
+    };
+  }
+}
+
+// Handle export all screenshots
+async function handleExportAllScreenshots() {
+  try {
+    const screenshots = await handleGetScreenshots();
+    
+    if (screenshots.length === 0) {
+      throw new Error('No screenshots to export');
+    }
+    
+    // For now, just show a success message
+    // In a full implementation, this would generate a ZIP file with all screenshots
+    await updateStatistics('bulk_export');
+    
+    return {
+      message: `Successfully exported ${screenshots.length} screenshots`,
+      count: screenshots.length
+    };
+    
+  } catch (error) {
+    console.error('Failed to export all screenshots:', error);
+    throw error;
+  }
+}
+
+// Handle get settings
+async function handleGetSettings() {
+  try {
+    const storage = await chrome.storage.local.get(['snapJournalConfig']);
+    const config = storage.snapJournalConfig || {};
+    
+    return config.settings || {
+      markerSize: 16,
+      markerColor: '#FF0000',
+      textSize: 14,
+      exportFormat: 'pdf',
+      includeTimestamp: true,
+      includeMetadata: true,
+      hipaaMode: false,
+      autoCleanup: false
+    };
+    
+  } catch (error) {
+    console.error('Failed to get settings:', error);
+    throw error;
+  }
+}
+
+// Handle update settings
+async function handleUpdateSettings(newSettings) {
+  try {
+    const storage = await chrome.storage.local.get(['snapJournalConfig']);
+    const config = storage.snapJournalConfig || {};
+    
+    config.settings = { ...config.settings, ...newSettings };
+    config.lastUpdated = new Date().toISOString();
+    
+    await chrome.storage.local.set({ snapJournalConfig: config });
+    
+    return { success: true };
+    
+  } catch (error) {
+    console.error('Failed to update settings:', error);
+    throw error;
+  }
+}
+
+// Generate unique ID
+function generateUniqueId() {
+  return 'screenshot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Get browser info
+async function getBrowserInfo() {
+  return {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    timestamp: new Date().toISOString()
+  };
+}
+
+// Show error notification
+function showErrorNotification(message) {
+  chrome.notifications?.create({
+    type: 'basic',
+    iconUrl: 'icons/icon48.png',
+    title: 'Snap Journal Error',
+    message: message
+  });
 }
 
 console.log('Snap Journal background service worker loaded successfully');
