@@ -116,6 +116,8 @@ async function handleRegularPageScreenshot(tab) {
       }
     }, 1000);
     
+    return { success: true, screenshotId: screenshotData.id };
+    
   } catch (error) {
     console.error('Regular page screenshot failed:', error);
     throw error;
@@ -161,8 +163,14 @@ async function handleSpecialPageScreenshot(tab) {
         });
       } catch (error) {
         console.error('Failed to send screenshot data:', error);
+        // If message fails, store data and let annotation interface retrieve it
+        await chrome.storage.local.set({
+          [`pendingScreenshot_${screenshotData.id}`]: screenshotData
+        });
       }
     }, 1000);
+    
+    return { success: true, screenshotId: screenshotData.id };
     
   } catch (error) {
     console.error('Special page screenshot failed:', error);
