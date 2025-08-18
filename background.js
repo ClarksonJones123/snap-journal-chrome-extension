@@ -75,36 +75,10 @@ async function handleRegularPageScreenshot(tab) {
   try {
     console.log('📷 Capturing visible tab for regular page...');
     console.log('Tab details:', { windowId: tab.windowId, url: tab.url });
-    console.log('Browser info:', navigator.userAgent);
     
-    // Check if we're in Edge
-    const isEdge = navigator.userAgent.includes('Edg/');
-    console.log('🌐 Running in Edge:', isEdge);
-    
-    // Use chrome.tabs.captureVisibleTab for all pages
-    let screenshotDataUrl;
-    try {
-      screenshotDataUrl = await chrome.tabs.captureVisibleTab(
-        tab.windowId,
-        { format: 'png', quality: 100 }
-      );
-      console.log('✅ Screenshot captured, data URL length:', screenshotDataUrl.length);
-    } catch (captureError) {
-      console.error('❌ captureVisibleTab failed:', captureError);
-      
-      // Try without windowId for Edge compatibility
-      try {
-        console.log('🔄 Retrying without windowId...');
-        screenshotDataUrl = await chrome.tabs.captureVisibleTab(
-          null,
-          { format: 'png', quality: 100 }
-        );
-        console.log('✅ Screenshot captured on retry, data URL length:', screenshotDataUrl.length);
-      } catch (retryError) {
-        console.error('❌ Retry also failed:', retryError);
-        throw new Error(`Screenshot capture failed: ${captureError.message}`);
-      }
-    }
+    // Use universal screenshot capture system
+    const screenshotDataUrl = await universalScreenshotCapture(tab.windowId);
+    console.log('✅ Screenshot captured, data URL length:', screenshotDataUrl.length);
     
     // Store screenshot data
     const screenshotData = {
@@ -157,30 +131,9 @@ async function handleSpecialPageScreenshot(tab) {
     console.log('🔧 Capturing visible tab for special page...');
     console.log('Special page details:', { windowId: tab.windowId, url: tab.url });
     
-    // Use chrome.tabs.captureVisibleTab for special pages
-    let screenshotDataUrl;
-    try {
-      screenshotDataUrl = await chrome.tabs.captureVisibleTab(
-        tab.windowId,
-        { format: 'png', quality: 100 }
-      );
-      console.log('✅ Special page screenshot captured, data URL length:', screenshotDataUrl.length);
-    } catch (captureError) {
-      console.error('❌ Special page captureVisibleTab failed:', captureError);
-      
-      // Try without windowId for Edge compatibility
-      try {
-        console.log('🔄 Retrying special page without windowId...');
-        screenshotDataUrl = await chrome.tabs.captureVisibleTab(
-          null,
-          { format: 'png', quality: 100 }
-        );
-        console.log('✅ Special page screenshot captured on retry, data URL length:', screenshotDataUrl.length);
-      } catch (retryError) {
-        console.error('❌ Special page retry also failed:', retryError);
-        throw new Error(`Special page screenshot capture failed: ${captureError.message}`);
-      }
-    }
+    // Use universal screenshot capture system
+    const screenshotDataUrl = await universalScreenshotCapture(tab.windowId);
+    console.log('✅ Special page screenshot captured, data URL length:', screenshotDataUrl.length);
     
     // Store screenshot data
     const screenshotData = {
@@ -468,7 +421,77 @@ function generateUniqueId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2);
 }
 
-async function getBrowserInfo() {
+// Universal browser detection and compatibility
+function getBrowserInfo() {
+  const userAgent = navigator.userAgent;
+  let browserName = 'Unknown';
+  let browserVersion = 'Unknown';
+  
+  if (userAgent.includes('Edg/')) {
+    browserName = 'Microsoft Edge';
+    const match = userAgent.match(/Edg\/([0-9.]+)/);
+    browserVersion = match ? match[1] : 'Unknown';
+  } else if (userAgent.includes('Chrome/')) {
+    browserName = 'Google Chrome';
+    const match = userAgent.match(/Chrome\/([0-9.]+)/);
+    browserVersion = match ? match[1] : 'Unknown';
+  } else if (userAgent.includes('Firefox/')) {
+    browserName = 'Mozilla Firefox';
+    const match = userAgent.match(/Firefox\/([0-9.]+)/);
+    browserVersion = match ? match[1] : 'Unknown';
+  }
+  
+  return {
+    name: browserName,
+    version: browserVersion,
+    userAgent: userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    isEdge: browserName === 'Microsoft Edge',
+    isChrome: browserName === 'Google Chrome',
+    isFirefox: browserName === 'Mozilla Firefox'
+  };
+}
+
+// Universal screenshot capture with browser-specific optimizations
+async function universalScreenshotCapture(windowId, options = {}) {
+  const browserInfo = getBrowserInfo();
+  const defaultOptions = { format: 'png', quality: 100 };
+  const captureOptions = { ...defaultOptions, ...options };
+  
+  console.log('🌐 Universal screenshot capture for:', browserInfo.name, browserInfo.version);
+  
+  // Try different approaches based on browser
+  const attempts = [
+    // Attempt 1: Standard approach with windowId
+    () => chrome.tabs.captureVisibleTab(windowId, captureOptions),
+    
+    // Attempt 2: Without windowId (Edge compatibility)
+    () => chrome.tabs.captureVisibleTab(null, captureOptions),
+    
+    // Attempt 3: Current window only
+    () => chrome.tabs.captureVisibleTab(captureOptions),
+    
+    // Attempt 4: Minimal options for maximum compatibility
+    () => chrome.tabs.captureVisibleTab({ format: 'png' })
+  ];
+  
+  for (let i = 0; i < attempts.length; i++) {
+    try {
+      console.log(`🔄 Screenshot attempt ${i + 1}/${attempts.length} (${browserInfo.name})...`);
+      const result = await attempts[i]();
+      console.log(`✅ Screenshot successful on attempt ${i + 1} for ${browserInfo.name}`);
+      return result;
+    } catch (error) {
+      console.warn(`⚠️ Screenshot attempt ${i + 1} failed for ${browserInfo.name}:`, error.message);
+      if (i === attempts.length - 1) {
+        throw new Error(`All screenshot attempts failed in ${browserInfo.name}. Last error: ${error.message}`);
+      }
+    }
+  }
+}
+
+async function getBrowserInfoLegacy() {
   return {
     userAgent: navigator.userAgent,
     platform: navigator.platform,

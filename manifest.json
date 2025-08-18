@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Snap Journal - Medical-Grade Screenshot Annotation",
   "version": "2.0.1",
-  "description": "Professional screenshot annotation with unlimited storage. Works on ANY webpage including Chrome internal pages. HIPAA compliant.",
+  "description": "Professional screenshot annotation with unlimited storage. Works on ANY webpage including Chrome/Edge internal pages. HIPAA compliant. Universal Chrome & Edge compatibility.",
   
   "permissions": [
     "activeTab",

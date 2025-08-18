@@ -1,11 +1,13 @@
 # 📸 Snap Journal - Medical-Grade Screenshot Annotation
 
-> **The world's most advanced Chrome extension for precise screenshot annotation with unlimited storage**
+> **The world's most advanced browser extension for precise screenshot annotation with unlimited storage - Universal Chrome & Edge compatibility**
 
 [![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](CHANGELOG.md)
 [![Chrome Web Store](https://img.shields.io/badge/Chrome-Web%20Store-green.svg)](https://chrome.google.com/webstore)
+[![Edge Add-ons](https://img.shields.io/badge/Edge-Add--ons-blue.svg)](https://microsoftedge.microsoft.com/addons)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![HIPAA](https://img.shields.io/badge/HIPAA-Compatible-green.svg)](docs/PRIVACY_POLICY.md)
+[![Universal](https://img.shields.io/badge/Browser-Universal-orange.svg)](#browser-compatibility)
 
 ## 🚀 **Quick Start**
 
@@ -20,14 +22,24 @@ Get started in under 2 minutes:
 
 ---
 
-## 🏥 **Professional Features**
+## 🌐 **Browser Compatibility**
 
-### **Universal Compatibility**
-- ✅ **Chrome Internal Pages** (`chrome://settings/`, `chrome://extensions/`)
+### **Universal Browser Support**
+- ✅ **Google Chrome** - Full compatibility with Chrome 88+
+- ✅ **Microsoft Edge** - Native Edge support with optimized capture methods
+- ✅ **Chromium-based browsers** - Works with any Chromium-based browser
+- 🔄 **Automatic detection** - Intelligently adapts to your browser for optimal performance
+
+### **Universal Page Compatibility**
+- ✅ **Chrome/Edge Internal Pages** (`chrome://settings/`, `edge://settings/`)
 - ✅ **Local Files** (`file://` URLs and local documents)
 - ✅ **Secure Sites** (Banking, healthcare portals)
 - ✅ **Corporate Intranets** (Restricted business sites)
 - ✅ **Any Webpage** (No limitations or restrictions)
+
+---
+
+## 🏥 **Professional Features**
 
 ### **Medical-Grade Precision**
 - 🎯 **16px Precision Markers** - Optimal visibility with pixel-perfect placement
