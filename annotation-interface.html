@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snap Journal - Screenshot Annotation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+      background: #2c3e50;
+      color: #ecf0f1;
+      overflow: hidden;
+    }
+    
+    .annotation-container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    
+    .annotation-header {
+      background: linear-gradient(135deg, #34495e, #2c3e50);
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid #1abc9c;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    
+    .annotation-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #ecf0f1;
+    }
+    
+    .header-controls {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .btn {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: linear-gradient(135deg, #3498db, #5dade2);
+      color: white;
+    }
+    
+    .btn-danger {
+      background: linear-gradient(135deg, #e74c3c, #ec7063);
+      color: white;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    
+    .annotation-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: auto;
+      background: linear-gradient(45deg, #ecf0f1, #bdc3c7);
+      padding: 25px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    
+    #annotation-canvas {
+      max-width: 100%;
+      height: auto;
+      border: 3px solid #34495e;
+      border-radius: 8px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      cursor: crosshair;
+      background: white;
+    }
+    
+    .annotations-overlay {
+      position: absolute;
+      top: 25px;
+      left: 25px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    .sidebar {
+      width: 350px;
+      background: linear-gradient(180deg, #34495e, #2c3e50);
+      padding: 25px;
+      overflow-y: auto;
+      border-left: 3px solid #1abc9c;
+    }
+    
+    .sidebar h3 {
+      color: #1abc9c;
+      margin-bottom: 15px;
+      font-size: 16px;
+      border-bottom: 2px solid #1abc9c;
+      padding-bottom: 8px;
+    }
+    
+    .info-section {
+      margin-bottom: 25px;
+    }
+    
+    .info-item {
+      margin: 10px 0;
+      font-size: 14px;
+    }
+    
+    .info-label {
+      color: #1abc9c;
+      font-weight: 600;
+    }
+    
+    .instructions {
+      margin-bottom: 25px;
+    }
+    
+    .instructions ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .instructions li {
+      margin: 8px 0;
+      padding-left: 20px;
+      position: relative;
+      font-size: 14px;
+    }
+    
+    .instructions li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #1abc9c;
+      font-weight: bold;
+    }
+    
+    .annotations-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .annotation-item {
+      background: rgba(52, 73, 94, 0.3);
+      border: 1px solid #4a5f7a;
+      border-radius: 4px;
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 13px;
+    }
+    
+    .loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(44, 62, 80, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #34495e;
+      border-top: 4px solid #1abc9c;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    .loading-text {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #ecf0f1;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    /* Annotation elements */
+    .annotation-marker {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: radial-gradient(circle, #e74c3c, #c0392b);
+      border: 3px solid white;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+      pointer-events: all;
+      z-index: 20;
+    }
+    
+    .annotation-text {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.98);
+      border: 2px solid #34495e;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 14px;
+      color: #2c3e50;
+      cursor: move;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      pointer-events: all;
+      min-width: 120px;
+      max-width: 300px;
+      z-index: 15;
+    }
+    
+    .annotation-text input {
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      color: inherit;
+      width: 100%;
+      outline: none;
+    }
+    
+    .annotation-arrow {
+      position: absolute;
+      pointer-events: none;
+      z-index: 5;
+    }
+    
+    .annotation-arrow line {
+      stroke: #2c3e50;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+  </style>
+</head>
+<body>
+  <div class="annotation-container">
+    <div class="annotation-header">
+      <h1>Snap Journal - Professional Screenshot Annotation</h1>
+      <div class="header-controls">
+        <button id="save-btn" class="btn btn-primary">Save Screenshot</button>
+        <button id="export-btn" class="btn btn-secondary">Export PDF</button>
+        <button id="close-btn" class="btn btn-danger">Close</button>
+      </div>
+    </div>
+    
+    <div class="annotation-content">
+      <div class="canvas-container">
+        <canvas id="annotation-canvas"></canvas>
+        <div class="annotations-overlay" id="annotations-overlay"></div>
+      </div>
+      
+      <div class="sidebar">
+        <div class="info-section">
+          <h3>Screenshot Information</h3>
+          <div class="info-item">
+            <span class="info-label">URL:</span>
+            <div id="screenshot-url">Loading...</div>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Title:</span>
+            <div id="screenshot-title">Loading...</div>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Timestamp:</span>
+            <div id="screenshot-timestamp">Loading...</div>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Annotations:</span>
+            <div id="annotation-count">0</div>
+          </div>
+        </div>
+        
+        <div class="instructions">
+          <h3>Instructions</h3>
+          <ul>
+            <li>Click anywhere on the screenshot to add a marker</li>
+            <li>Type your annotation text in the input field</li>
+            <li>Drag text labels to reposition them</li>
+            <li>Double-click text to edit existing annotations</li>
+            <li>Save your work when complete</li>
+          </ul>
+        </div>
+        
+        <div class="annotations-list">
+          <h3>Annotations</h3>
+          <div id="annotations-container">
+            <p>No annotations yet. Click on the screenshot to add markers.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="loading-screen" class="loading-screen">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading screenshot...</div>
+  </div>
+  
+  <script src="annotation-interface.js"></script>
+</body>
+</html>

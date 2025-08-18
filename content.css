@@ -1,0 +1,476 @@
+/**
+ * Snap Journal - Content Script Styles
+ * Professional styling for annotation interface
+ * Version: 2.0.1
+ */
+
+/* Reset and base styles for annotation interface */
+#snap-journal-interface * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Main interface container */
+#snap-journal-interface {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0, 0, 0, 0.95) !important;
+  z-index: 2147483647 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  color: #333 !important;
+}
+
+/* Header section */
+.snap-journal-header {
+  background: linear-gradient(135deg, #2c3e50, #34495e) !important;
+  color: white !important;
+  padding: 15px 25px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  border-bottom: 3px solid #1abc9c !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3) !important;
+}
+
+.snap-journal-header h2 {
+  margin: 0 !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #ecf0f1 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+.snap-journal-controls {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+}
+
+/* Button styles */
+.snap-btn {
+  padding: 10px 18px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.snap-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+.snap-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+}
+
+.snap-btn-primary {
+  background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+  color: white !important;
+}
+
+.snap-btn-primary:hover {
+  background: linear-gradient(135deg, #229954, #27ae60) !important;
+}
+
+.snap-btn-secondary {
+  background: linear-gradient(135deg, #3498db, #5dade2) !important;
+  color: white !important;
+}
+
+.snap-btn-secondary:hover {
+  background: linear-gradient(135deg, #2980b9, #3498db) !important;
+}
+
+.snap-btn-danger {
+  background: linear-gradient(135deg, #e74c3c, #ec7063) !important;
+  color: white !important;
+}
+
+.snap-btn-danger:hover {
+  background: linear-gradient(135deg, #c0392b, #e74c3c) !important;
+}
+
+.snap-btn:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* Content area */
+.snap-journal-content {
+  display: flex !important;
+  flex: 1 !important;
+  overflow: hidden !important;
+}
+
+/* Canvas container */
+.snap-journal-canvas-container {
+  flex: 1 !important;
+  position: relative !important;
+  overflow: auto !important;
+  background: linear-gradient(45deg, #ecf0f1, #bdc3c7) !important;
+  padding: 25px !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+}
+
+#snap-journal-canvas {
+  display: block !important;
+  max-width: 100% !important;
+  height: auto !important;
+  border: 3px solid #34495e !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
+  cursor: crosshair !important;
+  background: white !important;
+}
+
+/* Annotations overlay */
+#snap-journal-annotations {
+  position: absolute !important;
+  top: 25px !important;
+  left: 25px !important;
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
+
+/* Sidebar */
+.snap-journal-sidebar {
+  width: 350px !important;
+  background: linear-gradient(180deg, #34495e, #2c3e50) !important;
+  color: #ecf0f1 !important;
+  padding: 25px !important;
+  overflow-y: auto !important;
+  border-left: 3px solid #1abc9c !important;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+.snap-journal-sidebar h3 {
+  margin: 0 0 18px 0 !important;
+  font-size: 18px !important;
+  color: #1abc9c !important;
+  border-bottom: 2px solid #1abc9c !important;
+  padding-bottom: 10px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1px !important;
+}
+
+.snap-journal-info {
+  margin-bottom: 30px !important;
+}
+
+.snap-journal-info p {
+  margin: 12px 0 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  word-break: break-word !important;
+}
+
+.snap-journal-info strong {
+  color: #1abc9c !important;
+  font-weight: 600 !important;
+}
+
+.snap-journal-instructions {
+  margin-bottom: 30px !important;
+}
+
+.snap-journal-instructions ul {
+  margin: 0 !important;
+  padding-left: 20px !important;
+  list-style-type: none !important;
+}
+
+.snap-journal-instructions li {
+  margin: 10px 0 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  position: relative !important;
+  padding-left: 20px !important;
+}
+
+.snap-journal-instructions li:before {
+  content: "→" !important;
+  position: absolute !important;
+  left: 0 !important;
+  color: #1abc9c !important;
+  font-weight: bold !important;
+}
+
+/* Annotation elements */
+.snap-annotation-marker {
+  position: absolute !important;
+  width: 16px !important;
+  height: 16px !important;
+  background: radial-gradient(circle, #e74c3c, #c0392b) !important;
+  border: 3px solid white !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+  pointer-events: all !important;
+  z-index: 20 !important;
+  transition: transform 0.2s ease !important;
+}
+
+.snap-annotation-marker:hover {
+  transform: scale(1.2) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.snap-annotation-text {
+  position: absolute !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 2px solid #34495e !important;
+  border-radius: 6px !important;
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
+  color: #2c3e50 !important;
+  cursor: move !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  pointer-events: all !important;
+  min-width: 120px !important;
+  max-width: 300px !important;
+  z-index: 15 !important;
+  backdrop-filter: blur(5px) !important;
+  transition: all 0.2s ease !important;
+}
+
+.snap-annotation-text:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+  border-color: #1abc9c !important;
+}
+
+.snap-annotation-text input {
+  border: none !important;
+  background: transparent !important;
+  font-size: 14px !important;
+  font-family: inherit !important;
+  color: inherit !important;
+  width: 100% !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.snap-annotation-text input::placeholder {
+  color: #7f8c8d !important;
+  font-style: italic !important;
+}
+
+/* Arrow styles */
+.snap-annotation-arrow {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: 5 !important;
+}
+
+.snap-annotation-arrow line {
+  stroke: #2c3e50 !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3)) !important;
+}
+
+/* Annotations list */
+.snap-journal-annotations-list {
+  margin-top: 20px !important;
+}
+
+#snap-annotations-list {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.annotation-item {
+  background: rgba(52, 73, 94, 0.3) !important;
+  border: 1px solid #4a5f7a !important;
+  border-radius: 4px !important;
+  padding: 10px !important;
+  margin: 8px 0 !important;
+  font-size: 13px !important;
+}
+
+.annotation-number {
+  color: #1abc9c !important;
+  font-weight: bold !important;
+  margin-bottom: 4px !important;
+}
+
+.annotation-text {
+  color: #ecf0f1 !important;
+  margin-bottom: 4px !important;
+}
+
+.annotation-coords {
+  color: #95a5a6 !important;
+  font-size: 11px !important;
+}
+
+/* Scrollbar styling */
+.snap-journal-sidebar::-webkit-scrollbar,
+.snap-journal-canvas-container::-webkit-scrollbar,
+#snap-annotations-list::-webkit-scrollbar {
+  width: 8px !important;
+}
+
+.snap-journal-sidebar::-webkit-scrollbar-track,
+.snap-journal-canvas-container::-webkit-scrollbar-track,
+#snap-annotations-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1) !important;
+  border-radius: 4px !important;
+}
+
+.snap-journal-sidebar::-webkit-scrollbar-thumb,
+.snap-journal-canvas-container::-webkit-scrollbar-thumb,
+#snap-annotations-list::-webkit-scrollbar-thumb {
+  background: #1abc9c !important;
+  border-radius: 4px !important;
+}
+
+.snap-journal-sidebar::-webkit-scrollbar-thumb:hover,
+.snap-journal-canvas-container::-webkit-scrollbar-thumb:hover,
+#snap-annotations-list::-webkit-scrollbar-thumb:hover {
+  background: #16a085 !important;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .snap-journal-sidebar {
+    width: 300px !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .snap-journal-content {
+    flex-direction: column !important;
+  }
+  
+  .snap-journal-sidebar {
+    width: 100% !important;
+    height: 250px !important;
+    border-left: none !important;
+    border-top: 3px solid #1abc9c !important;
+  }
+  
+  .snap-journal-header {
+    flex-direction: column !important;
+    gap: 15px !important;
+    text-align: center !important;
+  }
+  
+  .snap-journal-controls {
+    justify-content: center !important;
+  }
+}
+
+/* Animation for interface appearance */
+@keyframes snapJournalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+#snap-journal-interface {
+  animation: snapJournalFadeIn 0.3s ease-out !important;
+}
+
+/* Loading states */
+.snap-btn.loading {
+  position: relative !important;
+  color: transparent !important;
+}
+
+.snap-btn.loading:after {
+  content: "" !important;
+  position: absolute !important;
+  width: 16px !important;
+  height: 16px !important;
+  top: 50% !important;
+  left: 50% !important;
+  margin-left: -8px !important;
+  margin-top: -8px !important;
+  border: 2px solid transparent !important;
+  border-top-color: #ffffff !important;
+  border-radius: 50% !important;
+  animation: snapJournalSpin 1s linear infinite !important;
+}
+
+@keyframes snapJournalSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Success states */
+.snap-btn.success {
+  background: linear-gradient(135deg, #27ae60, #2ecc71) !important;
+}
+
+.snap-btn.success:after {
+  content: "✓" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: white !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .snap-annotation-marker {
+    border-width: 4px !important;
+  }
+  
+  .snap-annotation-text {
+    border-width: 3px !important;
+    background: white !important;
+  }
+  
+  .snap-annotation-arrow line {
+    stroke-width: 3px !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  #snap-journal-interface {
+    display: none !important;
+  }
+}

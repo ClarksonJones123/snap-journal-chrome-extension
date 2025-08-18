@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snap Journal - Professional Screenshot Annotation</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <div class="popup-header">
+      <div class="logo-section">
+        <img src="icons/icon48.png" alt="Snap Journal" class="logo">
+        <div class="title-section">
+          <h1>Snap Journal</h1>
+          <p class="subtitle">Medical-Grade Screenshot Annotation</p>
+        </div>
+      </div>
+      <div class="version-badge">v2.0.1</div>
+    </div>
+
+    <!-- Main Actions -->
+    <div class="main-actions">
+      <button id="capture-btn" class="action-btn primary">
+        <span class="btn-icon">📸</span>
+        <div class="btn-content">
+          <span class="btn-title">Capture Screenshot</span>
+          <span class="btn-subtitle">Annotate current page</span>
+        </div>
+      </button>
+
+      <button id="gallery-btn" class="action-btn secondary">
+        <span class="btn-icon">🖼️</span>
+        <div class="btn-content">
+          <span class="btn-title">View Gallery</span>
+          <span class="btn-subtitle">Browse saved screenshots</span>
+        </div>
+      </button>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-section">
+      <div class="stat-item">
+        <span class="stat-number" id="total-screenshots">0</span>
+        <span class="stat-label">Screenshots</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" id="total-annotations">0</span>
+        <span class="stat-label">Annotations</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-number" id="total-exports">0</span>
+        <span class="stat-label">PDF Exports</span>
+      </div>
+    </div>
+
+    <!-- Current Page Info -->
+    <div class="page-info">
+      <h3>Current Page</h3>
+      <div class="page-details">
+        <div class="page-url" id="current-url">Loading...</div>
+        <div class="page-title" id="current-title">Loading...</div>
+        <div class="compatibility-status" id="compatibility-status">
+          <span class="status-indicator"></span>
+          <span class="status-text">Checking compatibility...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features Highlight -->
+    <div class="features-section">
+      <h3>Professional Features</h3>
+      <div class="feature-list">
+        <div class="feature-item">
+          <span class="feature-icon">✅</span>
+          <span class="feature-text">Universal page compatibility</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🎯</span>
+          <span class="feature-text">16px precision markers</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">📄</span>
+          <span class="feature-text">Professional PDF export</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">💾</span>
+          <span class="feature-text">Unlimited local storage</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon">🏥</span>
+          <span class="feature-text">HIPAA compliant</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button id="settings-btn" class="quick-btn">
+        <span class="quick-icon">⚙️</span>
+        Settings
+      </button>
+      <button id="help-btn" class="quick-btn">
+        <span class="quick-icon">❓</span>
+        Help
+      </button>
+      <button id="export-all-btn" class="quick-btn">
+        <span class="quick-icon">📤</span>
+        Export All
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="popup-footer">
+      <div class="footer-links">
+        <a href="#" id="privacy-link">Privacy Policy</a>
+        <a href="#" id="docs-link">Documentation</a>
+        <a href="#" id="support-link">Support</a>
+      </div>
+      <div class="footer-text">
+        Professional screenshot annotation for healthcare, corporate, and academic use.
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Processing...</div>
+  </div>
+
+  <!-- Gallery Modal -->
+  <div id="gallery-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Screenshot Gallery</h2>
+        <button id="close-gallery" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="gallery-controls">
+          <input type="text" id="search-input" placeholder="Search screenshots..." class="search-input">
+          <select id="sort-select" class="sort-select">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="url">By URL</option>
+            <option value="annotations">By Annotations</option>
+          </select>
+        </div>
+        <div id="gallery-grid" class="gallery-grid">
+          <!-- Screenshots will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Settings</h2>
+        <button id="close-settings" class="close-btn">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-section">
+          <h3>Annotation Settings</h3>
+          <div class="setting-item">
+            <label for="marker-size">Marker Size (px):</label>
+            <input type="range" id="marker-size" min="12" max="24" value="16">
+            <span id="marker-size-value">16</span>
+          </div>
+          <div class="setting-item">
+            <label for="marker-color">Marker Color:</label>
+            <input type="color" id="marker-color" value="#FF0000">
+          </div>
+          <div class="setting-item">
+            <label for="text-size">Text Size (px):</label>
+            <input type="range" id="text-size" min="12" max="20" value="14">
+            <span id="text-size-value">14</span>
+          </div>
+        </div>
+        
+        <div class="settings-section">
+          <h3>Export Settings</h3>
+          <div class="setting-item">
+            <label for="export-format">Default Format:</label>
+            <select id="export-format">
+              <option value="pdf">PDF</option>
+              <option value="png">PNG</option>
+              <option value="jpeg">JPEG</option>
+            </select>
+          </div>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="include-timestamp" checked>
+              Include timestamp in exports
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="include-metadata" checked>
+              Include metadata in exports
+            </label>
+          </div>
+        </div>
+        
+        <div class="settings-section">
+          <h3>Privacy & Compliance</h3>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="hipaa-mode">
+              Enable HIPAA compliance mode
+            </label>
+          </div>
+          <div class="setting-item">
+            <label>
+              <input type="checkbox" id="auto-cleanup">
+              Auto-cleanup old screenshots (7 years)
+            </label>
+          </div>
+        </div>
+        
+        <div class="settings-actions">
+          <button id="save-settings" class="action-btn primary">Save Settings</button>
+          <button id="reset-settings" class="action-btn secondary">Reset to Defaults</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
