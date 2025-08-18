@@ -29,6 +29,13 @@ async function initializeAnnotationInterface() {
     } else {
       // Wait for screenshot data from background script
       chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+      
+      // Also check for pending screenshots in storage (fallback)
+      setTimeout(async () => {
+        if (!currentScreenshot) {
+          await checkForPendingScreenshots();
+        }
+      }, 2000);
     }
     
   } catch (error) {
@@ -535,6 +542,32 @@ function showError(message) {
 function showSuccess(message) {
   console.log('Success:', message);
   // Could implement a toast notification here
+}
+
+// Check for pending screenshots in storage (fallback mechanism)
+async function checkForPendingScreenshots() {
+  try {
+    const storage = await chrome.storage.local.get();
+    
+    // Look for pending screenshot keys
+    for (const key in storage) {
+      if (key.startsWith('pendingScreenshot_')) {
+        const screenshotData = storage[key];
+        console.log('Found pending screenshot:', screenshotData.id);
+        
+        // Load the screenshot
+        await loadScreenshotData(screenshotData);
+        
+        // Clean up the pending screenshot
+        await chrome.storage.local.remove(key);
+        
+        break; // Only load the first one found
+      }
+    }
+    
+  } catch (error) {
+    console.error('Failed to check for pending screenshots:', error);
+  }
 }
 
 // Generate unique ID

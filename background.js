@@ -73,27 +73,48 @@ chrome.action.onClicked.addListener(async (tab) => {
 // Handle regular webpage screenshots
 async function handleRegularPageScreenshot(tab) {
   try {
-    // Inject content script if not already present
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      files: ['content.js']
-    });
+    // Use chrome.tabs.captureVisibleTab for all pages
+    const screenshotDataUrl = await chrome.tabs.captureVisibleTab(
+      tab.windowId,
+      { format: 'png', quality: 100 }
+    );
     
-    // Inject CSS
-    await chrome.scripting.insertCSS({
-      target: { tabId: tab.id },
-      files: ['content.css']
-    });
-    
-    // Trigger screenshot capture
-    await chrome.tabs.sendMessage(tab.id, {
-      action: 'captureScreenshot',
-      tabInfo: {
-        url: tab.url,
-        title: tab.title,
-        timestamp: new Date().toISOString()
+    // Store screenshot data
+    const screenshotData = {
+      id: generateUniqueId(),
+      timestamp: new Date().toISOString(),
+      url: tab.url,
+      title: tab.title,
+      image: screenshotDataUrl,
+      annotations: [],
+      metadata: {
+        captureMethod: 'chrome.tabs.captureVisibleTab',
+        browserInfo: await getBrowserInfo(),
+        extensionVersion: '2.0.1'
       }
+    };
+    
+    // Open annotation interface in new tab
+    const annotationTab = await chrome.tabs.create({
+      url: chrome.runtime.getURL('annotation-interface.html'),
+      active: true
     });
+    
+    // Wait for tab to load then send screenshot data
+    setTimeout(async () => {
+      try {
+        await chrome.tabs.sendMessage(annotationTab.id, {
+          action: 'loadScreenshot',
+          screenshotData: screenshotData
+        });
+      } catch (error) {
+        console.error('Failed to send screenshot data:', error);
+        // If message fails, store data and let annotation interface retrieve it
+        await chrome.storage.local.set({
+          [`pendingScreenshot_${screenshotData.id}`]: screenshotData
+        });
+      }
+    }, 1000);
     
   } catch (error) {
     console.error('Regular page screenshot failed:', error);
