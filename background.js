@@ -70,30 +70,86 @@ chrome.action.onClicked.addListener(async (tab) => {
   }
 });
 
-// Handle regular webpage screenshots
+// Handle regular webpage screenshots - FIXED: Enhanced Edge compatibility 
 async function handleRegularPageScreenshot(tab) {
   try {
     console.log('📷 Capturing visible tab for regular page...');
-    console.log('Tab details:', { windowId: tab.windowId, url: tab.url });
+    console.log('Tab details:', { windowId: tab.windowId, url: tab.url, browser: getBrowserInfo().name });
     
-    // Use universal screenshot capture system
-    const screenshotDataUrl = await universalScreenshotCapture(tab.windowId);
-    console.log('✅ Screenshot captured, data URL length:', screenshotDataUrl.length);
+    // Enhanced error checking for tab
+    if (!tab || !tab.id) {
+      throw new Error('Invalid tab provided for screenshot');
+    }
+    
+    // Check if tab is in a valid state for screenshot
+    if (tab.status && tab.status !== 'complete') {
+      console.warn('⚠️ Tab is not fully loaded, status:', tab.status);
+      // Wait a bit for tab to load
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    let screenshotDataUrl;
+    
+    try {
+      // Use universal screenshot capture system with enhanced error handling
+      screenshotDataUrl = await universalScreenshotCapture(tab.windowId);
+      
+      if (!screenshotDataUrl || screenshotDataUrl.length < 100) {
+        throw new Error('Screenshot data is empty or too small');
+      }
+      
+      console.log('✅ Screenshot captured successfully, data URL length:', screenshotDataUrl.length);
+      
+    } catch (screenshotError) {
+      console.error('❌ Screenshot capture failed:', screenshotError);
+      
+      // Edge fallback: try without windowId and with delay
+      if (getBrowserInfo().isEdge) {
+        console.log('🔷 Attempting Edge fallback method...');
+        
+        try {
+          // Wait a bit more for Edge
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Try the most basic approach for Edge
+          screenshotDataUrl = await chrome.tabs.captureVisibleTab();
+          
+          if (screenshotDataUrl && screenshotDataUrl.length > 100) {
+            console.log('✅ Edge fallback successful!');
+          } else {
+            throw new Error('Edge fallback returned empty data');
+          }
+          
+        } catch (edgeFallbackError) {
+          console.error('❌ Edge fallback also failed:', edgeFallbackError);
+          throw new Error(`Screenshot capture failed in Edge. Original error: ${screenshotError.message}, Fallback error: ${edgeFallbackError.message}`);
+        }
+      } else {
+        throw screenshotError;
+      }
+    }
     
     // Store screenshot data
     const screenshotData = {
       id: generateUniqueId(),
       timestamp: new Date().toISOString(),
       url: tab.url,
-      title: tab.title,
+      title: tab.title || 'Untitled Page',
       image: screenshotDataUrl,
       annotations: [],
       metadata: {
         captureMethod: 'chrome.tabs.captureVisibleTab',
-        browserInfo: await getBrowserInfo(),
-        extensionVersion: '2.0.1'
+        browserInfo: getBrowserInfo(),
+        extensionVersion: '2.0.1',
+        tabStatus: tab.status || 'unknown'
       }
     };
+    
+    console.log('📝 Screenshot data prepared:', {
+      id: screenshotData.id,
+      url: screenshotData.url,
+      imageLength: screenshotData.image?.length || 0
+    });
     
     // Open annotation interface in new tab
     const annotationTab = await chrome.tabs.create({
@@ -101,27 +157,42 @@ async function handleRegularPageScreenshot(tab) {
       active: true
     });
     
+    console.log('📖 Annotation tab created:', annotationTab.id);
+    
+    // Store screenshot data in storage as backup before trying to send message
+    await chrome.storage.local.set({
+      [`pendingScreenshot_${screenshotData.id}`]: screenshotData
+    });
+    
+    console.log('💾 Screenshot data stored in local storage as backup');
+    
     // Wait for tab to load then send screenshot data
     setTimeout(async () => {
       try {
+        console.log('📤 Attempting to send screenshot data to annotation interface...');
+        
         await chrome.tabs.sendMessage(annotationTab.id, {
           action: 'loadScreenshot',
           screenshotData: screenshotData
         });
-      } catch (error) {
-        console.error('Failed to send screenshot data:', error);
-        // If message fails, store data and let annotation interface retrieve it
-        await chrome.storage.local.set({
-          [`pendingScreenshot_${screenshotData.id}`]: screenshotData
-        });
+        
+        console.log('✅ Screenshot data sent successfully to annotation interface');
+        
+        // Clean up the backup storage since message was successful
+        await chrome.storage.local.remove(`pendingScreenshot_${screenshotData.id}`);
+        
+      } catch (messageError) {
+        console.error('❌ Failed to send screenshot data via message:', messageError);
+        console.log('💾 Screenshot data will be loaded from storage by annotation interface');
+        // Don't throw error here - annotation interface will load from storage
       }
-    }, 1000);
+    }, getBrowserInfo().isEdge ? 2000 : 1000); // Give Edge more time
     
     return { success: true, screenshotId: screenshotData.id };
     
   } catch (error) {
-    console.error('Regular page screenshot failed:', error);
-    throw error;
+    console.error('💥 Regular page screenshot failed:', error);
+    throw new Error(`Screenshot capture failed: ${error.message}`);
   }
 }
 
