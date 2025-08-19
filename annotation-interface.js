@@ -58,18 +58,72 @@ async function initializeAnnotationInterface() {
   }
 }
 
-// Set up event listeners
+// Set up event listeners - FIXED: Proper cleanup tracking
 function setupEventListeners() {
   // Header buttons
-  document.getElementById('save-btn').addEventListener('click', handleSaveScreenshot);
-  document.getElementById('export-btn').addEventListener('click', handleExportPDF);
-  document.getElementById('close-btn').addEventListener('click', handleCloseInterface);
+  addEventListenerWithCleanup('click', document.getElementById('save-btn'), handleSaveScreenshot);
+  addEventListenerWithCleanup('click', document.getElementById('export-btn'), handleExportPDF);
+  addEventListenerWithCleanup('click', document.getElementById('close-btn'), handleCloseInterface);
   
   // Canvas click for adding annotations
-  document.getElementById('annotation-canvas').addEventListener('click', handleCanvasClick);
+  const canvas = document.getElementById('annotation-canvas');
+  if (canvas) {
+    addEventListenerWithCleanup('click', canvas, handleCanvasClick);
+  }
   
   // Keyboard shortcuts
-  document.addEventListener('keydown', handleKeyboardShortcuts);
+  addEventListenerWithCleanup('keydown', document, handleKeyboardShortcuts);
+}
+
+// FIXED: Helper function to track and cleanup event listeners
+function addEventListenerWithCleanup(eventType, element, handler) {
+  if (!element) {
+    console.warn('Cannot add event listener to null element');
+    return;
+  }
+  
+  try {
+    element.addEventListener(eventType, handler);
+    eventListeners.push({ element, eventType, handler });
+  } catch (error) {
+    console.error('Failed to add event listener:', error);
+  }
+}
+
+// FIXED: Cleanup function to prevent memory leaks
+function cleanupInterface() {
+  console.log('Cleaning up annotation interface...');
+  
+  isInterfaceActive = false;
+  
+  // Remove all tracked event listeners
+  eventListeners.forEach(({ element, eventType, handler }) => {
+    try {
+      if (element && typeof element.removeEventListener === 'function') {
+        element.removeEventListener(eventType, handler);
+      }
+    } catch (error) {
+      console.warn('Failed to remove event listener:', error);
+    }
+  });
+  eventListeners = [];
+  
+  // Clear canvas and overlay
+  const canvas = document.getElementById('annotation-canvas');
+  const overlay = document.getElementById('annotations-overlay');
+  
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  
+  if (overlay) {
+    overlay.innerHTML = '';
+  }
+  
+  // Clear data
+  currentScreenshot = null;
+  annotationCounter = 0;
 }
 
 // Handle runtime messages
