@@ -306,39 +306,99 @@ async function handleTestConnection() {
   }
 }
 
-// Handle capture screenshot
+// Handle capture screenshot - FIXED: Enhanced Edge compatibility and error handling
 async function handleCaptureScreenshot() {
   try {
     console.log('🚀 Starting screenshot capture...');
     showLoading('Capturing screenshot...');
     
-    // Get current tab
+    // Detect browser for better error messages
+    const isEdge = navigator.userAgent.includes('Edg/');
+    const browserName = isEdge ? 'Microsoft Edge' : 'Chrome';
+    
+    console.log('🌐 Detected browser:', browserName);
+    
+    // Get current tab with enhanced error handling
     console.log('📋 Getting current tab...');
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    let tab;
+    try {
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+      tab = tabs[0];
+    } catch (tabError) {
+      console.error('❌ Failed to query tabs:', tabError);
+      throw new Error(`Failed to access current tab in ${browserName}. Please ensure the extension has proper permissions.`);
+    }
     
     if (!tab) {
       console.error('❌ No active tab found');
-      throw new Error('No active tab found');
+      throw new Error(`No active tab found in ${browserName}. Please make sure you have an active tab open.`);
     }
     
     console.log('✅ Found active tab:', { id: tab.id, url: tab.url, title: tab.title });
     
-    // Trigger screenshot capture
+    // Check tab permissions for Edge
+    if (isEdge && tab.url) {
+      if (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('chrome-extension://')) {
+        console.log('ℹ️ Taking screenshot of browser internal page in Edge');
+      }
+    }
+    
+    // Show browser-specific loading message
+    if (isEdge) {
+      showLoading('Capturing screenshot in Microsoft Edge...');
+    }
+    
+    // Trigger screenshot capture with timeout for Edge
     console.log('📤 Sending message to background script...');
-    const response = await chrome.runtime.sendMessage({
+    
+    const timeoutMs = isEdge ? 10000 : 5000; // Give Edge more time
+    const screenshotPromise = chrome.runtime.sendMessage({
       action: 'captureScreenshot',
       tabId: tab.id
     });
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error(`Screenshot capture timed out after ${timeoutMs/1000} seconds in ${browserName}`)), timeoutMs);
+    });
+    
+    let response;
+    try {
+      response = await Promise.race([screenshotPromise, timeoutPromise]);
+    } catch (timeoutError) {
+      console.error('⏰ Screenshot capture timed out:', timeoutError);
+      throw new Error(`Screenshot capture timed out in ${browserName}. This may be due to browser-specific restrictions. Try refreshing the page and trying again.`);
+    }
     
     console.log('📥 Received response from background:', response);
     
     if (response && response.success) {
       console.log('✅ Screenshot capture successful!');
       hideLoading();
-      window.close(); // Close popup after successful capture
+      
+      // Show success message with browser info
+      const successMsg = isEdge ? 
+        '✅ Screenshot captured successfully in Microsoft Edge!' : 
+        '✅ Screenshot captured successfully!';
+      
+      // Brief success notification before closing
+      showError(successMsg, 'success');
+      
+      setTimeout(() => {
+        window.close(); // Close popup after successful capture
+      }, 1000);
+      
     } else {
       console.error('❌ Screenshot capture failed - invalid response:', response);
-      throw new Error(response?.error || 'Screenshot capture failed - no success response');
+      
+      const errorMsg = response?.error || 'Screenshot capture failed - no success response';
+      
+      // Provide browser-specific guidance
+      if (isEdge) {
+        throw new Error(`${errorMsg}\n\nEdge-specific tips:\n• Make sure the extension has permissions\n• Try refreshing the page\n• Check if the page is fully loaded`);
+      } else {
+        throw new Error(errorMsg);
+      }
     }
     
   } catch (error) {
@@ -348,8 +408,22 @@ async function handleCaptureScreenshot() {
       message: error.message,
       stack: error.stack
     });
+    
     hideLoading();
-    showError('Screenshot capture failed: ' + error.message);
+    
+    // Enhanced error messages for Edge users
+    let userFriendlyMessage = error.message;
+    
+    if (navigator.userAgent.includes('Edg/')) {
+      userFriendlyMessage += '\n\n🔷 Microsoft Edge Troubleshooting:\n';
+      userFriendlyMessage += '• Ensure extension permissions are granted\n';
+      userFriendlyMessage += '• Try reloading the current page\n';
+      userFriendlyMessage += '• Make sure the page is fully loaded\n';
+      userFriendlyMessage += '• Try on a different webpage\n';
+      userFriendlyMessage += '• Check if Enhanced Security mode is interfering';
+    }
+    
+    showError('Screenshot capture failed: ' + userFriendlyMessage);
   }
 }
 
