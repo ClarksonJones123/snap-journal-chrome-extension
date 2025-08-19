@@ -259,9 +259,9 @@ function addAnnotationMarker(x, y) {
   const markerId = generateUniqueId();
   const markerNumber = screenshotData.annotations.length + 1;
   
-  // Create marker element
+  // Create marker element - FIXED: Consistent class names
   const marker = document.createElement('div');
-  marker.className = 'snap-journal-marker';
+  marker.className = 'snap-journal-marker'; // FIXED: Use consistent class name
   marker.id = `marker-${markerId}`;
   marker.style.left = `${x - 8}px`; // Center the 16px marker
   marker.style.top = `${y - 8}px`;
