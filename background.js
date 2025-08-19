@@ -428,12 +428,12 @@ async function handleUpdateSettings(newSettings) {
   }
 }
 
-// Utility functions
+// Utility functions - FIXED: Removed duplicate definitions
 function generateUniqueId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  return 'screenshot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-// Universal browser detection and compatibility
+// Universal browser detection and compatibility - FIXED: Consolidated function
 function getBrowserInfo() {
   const userAgent = navigator.userAgent;
   let browserName = 'Unknown';
@@ -459,6 +459,7 @@ function getBrowserInfo() {
     userAgent: userAgent,
     platform: navigator.platform,
     language: navigator.language,
+    timestamp: new Date().toISOString(),
     isEdge: browserName === 'Microsoft Edge',
     isChrome: browserName === 'Google Chrome',
     isFirefox: browserName === 'Mozilla Firefox'
