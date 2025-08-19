@@ -508,35 +508,101 @@ function getBrowserInfo() {
   };
 }
 
-// Universal screenshot capture with browser-specific optimizations
+// Universal screenshot capture with browser-specific optimizations - FIXED: Enhanced Edge support
 async function universalScreenshotCapture(windowId, options = {}) {
   const browserInfo = getBrowserInfo();
   const defaultOptions = { format: 'png', quality: 100 };
   const captureOptions = { ...defaultOptions, ...options };
   
   console.log('🌐 Universal screenshot capture for:', browserInfo.name, browserInfo.version);
+  console.log('🔧 Using windowId:', windowId, 'with options:', captureOptions);
   
-  // Try different approaches based on browser
+  // Edge-specific optimizations
+  if (browserInfo.isEdge) {
+    console.log('🔷 Detected Microsoft Edge - using Edge-optimized capture methods');
+    
+    const edgeAttempts = [
+      // Edge Attempt 1: Use current window without windowId (Edge prefers this)
+      async () => {
+        console.log('🔷 Edge Attempt 1: Current window without windowId');
+        return await chrome.tabs.captureVisibleTab({ format: 'png', quality: 90 });
+      },
+      
+      // Edge Attempt 2: Use null windowId explicitly
+      async () => {
+        console.log('🔷 Edge Attempt 2: Null windowId');
+        return await chrome.tabs.captureVisibleTab(null, { format: 'png', quality: 90 });
+      },
+      
+      // Edge Attempt 3: Use provided windowId but lower quality
+      async () => {
+        console.log('🔷 Edge Attempt 3: Provided windowId with lower quality');
+        return await chrome.tabs.captureVisibleTab(windowId, { format: 'png', quality: 80 });
+      },
+      
+      // Edge Attempt 4: Minimal options
+      async () => {
+        console.log('🔷 Edge Attempt 4: Minimal options');
+        return await chrome.tabs.captureVisibleTab({ format: 'png' });
+      }
+    ];
+    
+    for (let i = 0; i < edgeAttempts.length; i++) {
+      try {
+        console.log(`🔷 Edge screenshot attempt ${i + 1}/${edgeAttempts.length}...`);
+        const result = await edgeAttempts[i]();
+        if (result && result.length > 0) {
+          console.log(`✅ Edge screenshot successful on attempt ${i + 1}, data URL length:`, result.length);
+          return result;
+        } else {
+          throw new Error('Empty screenshot data received');
+        }
+      } catch (error) {
+        console.warn(`⚠️ Edge screenshot attempt ${i + 1} failed:`, error.message);
+        if (i === edgeAttempts.length - 1) {
+          throw new Error(`All Edge screenshot attempts failed. Last error: ${error.message}`);
+        }
+      }
+    }
+  }
+  
+  // Chrome and other browsers - original logic
   const attempts = [
     // Attempt 1: Standard approach with windowId
-    () => chrome.tabs.captureVisibleTab(windowId, captureOptions),
+    async () => {
+      console.log('🔄 Standard Attempt 1: windowId with full options');
+      return await chrome.tabs.captureVisibleTab(windowId, captureOptions);
+    },
     
-    // Attempt 2: Without windowId (Edge compatibility)
-    () => chrome.tabs.captureVisibleTab(null, captureOptions),
+    // Attempt 2: Without windowId (general compatibility)
+    async () => {
+      console.log('🔄 Standard Attempt 2: null windowId');
+      return await chrome.tabs.captureVisibleTab(null, captureOptions);
+    },
     
     // Attempt 3: Current window only
-    () => chrome.tabs.captureVisibleTab(captureOptions),
+    async () => {
+      console.log('🔄 Standard Attempt 3: current window only');
+      return await chrome.tabs.captureVisibleTab(captureOptions);
+    },
     
     // Attempt 4: Minimal options for maximum compatibility
-    () => chrome.tabs.captureVisibleTab({ format: 'png' })
+    async () => {
+      console.log('🔄 Standard Attempt 4: minimal options');
+      return await chrome.tabs.captureVisibleTab({ format: 'png' });
+    }
   ];
   
   for (let i = 0; i < attempts.length; i++) {
     try {
       console.log(`🔄 Screenshot attempt ${i + 1}/${attempts.length} (${browserInfo.name})...`);
       const result = await attempts[i]();
-      console.log(`✅ Screenshot successful on attempt ${i + 1} for ${browserInfo.name}`);
-      return result;
+      if (result && result.length > 0) {
+        console.log(`✅ Screenshot successful on attempt ${i + 1} for ${browserInfo.name}, data URL length:`, result.length);
+        return result;
+      } else {
+        throw new Error('Empty screenshot data received');
+      }
     } catch (error) {
       console.warn(`⚠️ Screenshot attempt ${i + 1} failed for ${browserInfo.name}:`, error.message);
       if (i === attempts.length - 1) {
