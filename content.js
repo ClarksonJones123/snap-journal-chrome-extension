@@ -579,3 +579,5 @@ function generateUniqueId() {
 }
 
 console.log('Snap Journal content script loaded successfully');
+
+} // Close the if statement from line 8
