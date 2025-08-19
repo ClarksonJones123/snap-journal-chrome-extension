@@ -891,22 +891,7 @@ async function handleUpdateSettings(newSettings) {
   }
 }
 
-// Generate unique ID
-function generateUniqueId() {
-  return 'screenshot_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
-
-// Get browser info
-async function getBrowserInfo() {
-  return {
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    language: navigator.language,
-    timestamp: new Date().toISOString()
-  };
-}
-
-// Show error notification
+// Show error notification - FIXED: Consolidated function
 function showErrorNotification(message) {
   chrome.notifications?.create({
     type: 'basic',
