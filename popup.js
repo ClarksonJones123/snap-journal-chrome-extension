@@ -14,10 +14,10 @@ let elements = {};
 // Initialize popup when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializePopup);
 
-// Initialize popup functionality
+// Initialize popup functionality - FIXED: Added null checks and error handling
 async function initializePopup() {
   try {
-    // Get DOM elements
+    // Get DOM elements - FIXED: Added null checks
     elements = {
       testBtn: document.getElementById('test-btn'),
       captureBtn: document.getElementById('capture-btn'),
@@ -68,17 +68,51 @@ async function initializePopup() {
       supportLink: document.getElementById('support-link')
     };
     
+    // FIXED: Check for missing critical elements
+    const criticalElements = ['testBtn', 'captureBtn', 'currentUrl', 'currentTitle'];
+    const missingElements = criticalElements.filter(key => !elements[key]);
+    
+    if (missingElements.length > 0) {
+      throw new Error(`Critical DOM elements missing: ${missingElements.join(', ')}`);
+    }
+    
     // Set up event listeners
     setupEventListeners();
     
-    // Load current page info
-    await loadCurrentPageInfo();
+    // Load current page info with timeout
+    const pageInfoPromise = loadCurrentPageInfo();
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Page info loading timeout')), 5000)
+    );
     
-    // Load statistics
-    await loadStatistics();
+    await Promise.race([pageInfoPromise, timeoutPromise]).catch(error => {
+      console.warn('Page info loading failed:', error);
+      // Continue with defaults
+      if (elements.currentUrl) elements.currentUrl.textContent = 'Unable to load page info';
+      if (elements.currentTitle) elements.currentTitle.textContent = 'Unknown';
+    });
     
-    // Load settings
-    await loadSettings();
+    // Load statistics with timeout
+    const statsPromise = loadStatistics();
+    const statsTimeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Statistics loading timeout')), 3000)
+    );
+    
+    await Promise.race([statsPromise, statsTimeoutPromise]).catch(error => {
+      console.warn('Statistics loading failed:', error);
+      // Continue with defaults
+    });
+    
+    // Load settings with timeout
+    const settingsPromise = loadSettings();
+    const settingsTimeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Settings loading timeout')), 3000)
+    );
+    
+    await Promise.race([settingsPromise, settingsTimeoutPromise]).catch(error => {
+      console.warn('Settings loading failed:', error);
+      // Continue with defaults
+    });
     
     console.log('Snap Journal popup initialized successfully');
     
