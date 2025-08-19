@@ -504,23 +504,7 @@ async function universalScreenshotCapture(windowId, options = {}) {
   }
 }
 
-async function getBrowserInfoLegacy() {
-  return {
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    language: navigator.language,
-    timestamp: new Date().toISOString()
-  };
-}
 
-function showErrorNotification(message) {
-  chrome.notifications?.create({
-    type: 'basic',
-    iconUrl: 'icons/icon48.png',
-    title: 'Snap Journal Error',
-    message: message
-  });
-}
 
 // IndexedDB management
 async function openDatabase() {
