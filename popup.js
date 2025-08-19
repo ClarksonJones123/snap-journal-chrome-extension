@@ -122,54 +122,63 @@ async function initializePopup() {
   }
 }
 
-// Set up event listeners
+// Set up event listeners - FIXED: Added null checks
 function setupEventListeners() {
+  // Helper function to safely add event listeners
+  const safeAddEventListener = (element, event, handler) => {
+    if (element && typeof element.addEventListener === 'function') {
+      element.addEventListener(event, handler);
+    } else {
+      console.warn(`Could not add ${event} listener to element:`, element);
+    }
+  };
+
   // Main action buttons
-  elements.testBtn.addEventListener('click', handleTestConnection);
-  elements.captureBtn.addEventListener('click', handleCaptureScreenshot);
-  elements.galleryBtn.addEventListener('click', handleShowGallery);
-  elements.settingsBtn.addEventListener('click', handleShowSettings);
-  elements.helpBtn.addEventListener('click', handleShowHelp);
-  elements.exportAllBtn.addEventListener('click', handleExportAll);
+  safeAddEventListener(elements.testBtn, 'click', handleTestConnection);
+  safeAddEventListener(elements.captureBtn, 'click', handleCaptureScreenshot);
+  safeAddEventListener(elements.galleryBtn, 'click', handleShowGallery);
+  safeAddEventListener(elements.settingsBtn, 'click', handleShowSettings);
+  safeAddEventListener(elements.helpBtn, 'click', handleShowHelp);
+  safeAddEventListener(elements.exportAllBtn, 'click', handleExportAll);
   
   // Modal close buttons
-  elements.closeGallery.addEventListener('click', () => hideModal(elements.galleryModal));
-  elements.closeSettings.addEventListener('click', () => hideModal(elements.settingsModal));
+  safeAddEventListener(elements.closeGallery, 'click', () => hideModal(elements.galleryModal));
+  safeAddEventListener(elements.closeSettings, 'click', () => hideModal(elements.settingsModal));
   
   // Gallery controls
-  elements.searchInput.addEventListener('input', handleGallerySearch);
-  elements.sortSelect.addEventListener('change', handleGallerySort);
+  safeAddEventListener(elements.searchInput, 'input', handleGallerySearch);
+  safeAddEventListener(elements.sortSelect, 'change', handleGallerySort);
   
   // Settings controls
-  elements.markerSize.addEventListener('input', updateMarkerSizeValue);
-  elements.textSize.addEventListener('input', updateTextSizeValue);
-  elements.saveSettings.addEventListener('click', handleSaveSettings);
-  elements.resetSettings.addEventListener('click', handleResetSettings);
+  safeAddEventListener(elements.markerSize, 'input', updateMarkerSizeValue);
+  safeAddEventListener(elements.textSize, 'input', updateTextSizeValue);
+  safeAddEventListener(elements.saveSettings, 'click', handleSaveSettings);
+  safeAddEventListener(elements.resetSettings, 'click', handleResetSettings);
   
   // Footer links
-  elements.privacyLink.addEventListener('click', (e) => {
+  safeAddEventListener(elements.privacyLink, 'click', (e) => {
     e.preventDefault();
     chrome.tabs.create({ url: chrome.runtime.getURL('docs/PRIVACY_POLICY.md') });
   });
   
-  elements.docsLink.addEventListener('click', (e) => {
+  safeAddEventListener(elements.docsLink, 'click', (e) => {
     e.preventDefault();
     chrome.tabs.create({ url: chrome.runtime.getURL('docs/README.md') });
   });
   
-  elements.supportLink.addEventListener('click', (e) => {
+  safeAddEventListener(elements.supportLink, 'click', (e) => {
     e.preventDefault();
     chrome.tabs.create({ url: chrome.runtime.getURL('TROUBLESHOOTING.md') });
   });
   
   // Modal backdrop clicks
-  elements.galleryModal.addEventListener('click', (e) => {
+  safeAddEventListener(elements.galleryModal, 'click', (e) => {
     if (e.target === elements.galleryModal) {
       hideModal(elements.galleryModal);
     }
   });
   
-  elements.settingsModal.addEventListener('click', (e) => {
+  safeAddEventListener(elements.settingsModal, 'click', (e) => {
     if (e.target === elements.settingsModal) {
       hideModal(elements.settingsModal);
     }
