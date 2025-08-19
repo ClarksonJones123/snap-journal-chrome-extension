@@ -1,20 +1,33 @@
 /**
  * Snap Journal - Annotation Interface Script
  * Handles the standalone annotation interface
- * Version: 2.0.1
+ * Version: 2.0.1 - FIXED: Memory leaks and race conditions
  */
 
 // Global variables
 let currentScreenshot = null;
 let annotationCounter = 0;
+let eventListeners = []; // FIXED: Track event listeners for cleanup
+let isInterfaceActive = false; // FIXED: Prevent race conditions
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeAnnotationInterface);
+
+// FIXED: Proper cleanup when page unloads
+window.addEventListener('beforeunload', cleanupInterface);
 
 // Initialize annotation interface
 async function initializeAnnotationInterface() {
   try {
     console.log('Initializing annotation interface...');
+    
+    // FIXED: Prevent multiple initializations
+    if (isInterfaceActive) {
+      console.log('Interface already active, skipping initialization');
+      return;
+    }
+    
+    isInterfaceActive = true;
     
     // Set up event listeners
     setupEventListeners();
@@ -28,11 +41,11 @@ async function initializeAnnotationInterface() {
       await loadExistingScreenshot(screenshotId);
     } else {
       // Wait for screenshot data from background script
-      chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+      addEventListenerWithCleanup('message', chrome.runtime.onMessage, handleRuntimeMessage);
       
       // Also check for pending screenshots in storage (fallback)
       setTimeout(async () => {
-        if (!currentScreenshot) {
+        if (!currentScreenshot && isInterfaceActive) {
           await checkForPendingScreenshots();
         }
       }, 2000);
@@ -41,6 +54,7 @@ async function initializeAnnotationInterface() {
   } catch (error) {
     console.error('Failed to initialize annotation interface:', error);
     showError('Failed to initialize annotation interface: ' + error.message);
+    isInterfaceActive = false;
   }
 }
 
