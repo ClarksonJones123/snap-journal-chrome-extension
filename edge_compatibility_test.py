@@ -220,8 +220,8 @@ class EdgeCompatibilityTester:
                          "Missing edge:// URL detection for Edge internal pages")
             
             # Check that edge:// pages are handled like chrome:// pages
-            edge_handling_pattern = r"edge://.*chrome://"
-            has_edge_handling = re.search(edge_handling_pattern, content) is not None
+            has_edge_handling = ("edge://" in content and "chrome://" in content and 
+                               "handleSpecialPageScreenshot" in content)
             self.log_test("Edge Internal Pages Handling", has_edge_handling,
                          "Edge internal pages not handled consistently with Chrome pages")
             
