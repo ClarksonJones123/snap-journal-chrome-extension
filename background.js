@@ -180,7 +180,7 @@ async function handleSpecialPageScreenshot(tab) {
   }
 }
 
-// Message handling from content scripts and popup
+// Message handling from content scripts and popup - FIXED: Added missing handlers
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('🎯 Background received message:', message);
   
@@ -215,6 +215,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         .then(result => sendResponse({ success: true, data: result }))
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true; // Keep message channel open for async response
+      
+    case 'getScreenshot':
+      // FIXED: Added missing getScreenshot handler
+      handleGetScreenshot(message.id)
+        .then(screenshot => sendResponse({ success: true, data: screenshot }))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
       
     case 'getScreenshots':
       handleGetScreenshots(message.filters)
@@ -257,6 +264,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         .then(result => sendResponse({ success: true, data: result }))
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true;
+      
+    default:
+      // FIXED: Handle unknown actions gracefully
+      console.warn('Unknown action received:', message.action);
+      sendResponse({ success: false, error: 'Unknown action: ' + message.action });
+      return false;
   }
 });
 
