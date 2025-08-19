@@ -303,6 +303,35 @@ async function handleSaveScreenshot(screenshotData) {
   }
 }
 
+// Get single screenshot from IndexedDB - FIXED: Added missing function
+async function handleGetScreenshot(id) {
+  try {
+    if (!id) {
+      throw new Error('Screenshot ID is required');
+    }
+    
+    const db = await openDatabase();
+    const transaction = db.transaction(['screenshots'], 'readonly');
+    const store = transaction.objectStore('screenshots');
+    
+    const screenshot = await new Promise((resolve, reject) => {
+      const request = store.get(id);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    
+    if (!screenshot) {
+      throw new Error('Screenshot not found');
+    }
+    
+    return screenshot;
+    
+  } catch (error) {
+    console.error('Failed to get screenshot:', error);
+    throw error;
+  }
+}
+
 // Get screenshots from IndexedDB
 async function handleGetScreenshots(filters = {}) {
   try {
