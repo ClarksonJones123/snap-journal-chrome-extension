@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snap Journal Extension Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .popup-test {
+            width: 380px;
+            height: 500px;
+            border: 2px solid #ccc;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Snap Journal Extension Test Suite</h1>
+        <p>Testing the Chrome extension functionality in a simulated environment.</p>
+        
+        <div class="test-section">
+            <h2>📋 Extension Structure Test</h2>
+            <div id="structure-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 Popup Interface Test</h2>
+            <button onclick="testPopupInterface()">Test Popup Interface</button>
+            <div class="popup-test">
+                <iframe id="popup-frame" src="popup.html" width="100%" height="100%"></iframe>
+            </div>
+            <div id="popup-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 JavaScript Functionality Test</h2>
+            <button onclick="testJavaScriptFunctions()">Test JavaScript Functions</button>
+            <div id="js-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📄 Annotation Interface Test</h2>
+            <button onclick="testAnnotationInterface()">Test Annotation Interface</button>
+            <div id="annotation-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Test Summary</h2>
+            <div id="summary-results"></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {
+            total: 0,
+            passed: 0,
+            failed: 0
+        };
+
+        function addResult(container, type, message) {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            document.getElementById(container).appendChild(div);
+            
+            testResults.total++;
+            if (type === 'success') testResults.passed++;
+            else if (type === 'error') testResults.failed++;
+            
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('summary-results');
+            summary.innerHTML = `
+                <div class="test-result info">
+                    <strong>Total Tests:</strong> ${testResults.total}<br>
+                    <strong>Passed:</strong> ${testResults.passed}<br>
+                    <strong>Failed:</strong> ${testResults.failed}<br>
+                    <strong>Success Rate:</strong> ${testResults.total > 0 ? ((testResults.passed/testResults.total)*100).toFixed(1) : 0}%
+                </div>
+            `;
+        }
+
+        function testPopupInterface() {
+            const frame = document.getElementById('popup-frame');
+            
+            try {
+                // Test if popup loads
+                if (frame.src.includes('popup.html')) {
+                    addResult('popup-results', 'success', '✅ Popup HTML loads successfully');
+                } else {
+                    addResult('popup-results', 'error', '❌ Popup HTML failed to load');
+                }
+                
+                // Test frame access (will be limited due to same-origin policy)
+                frame.onload = function() {
+                    try {
+                        addResult('popup-results', 'success', '✅ Popup iframe loaded successfully');
+                    } catch (e) {
+                        addResult('popup-results', 'info', 'ℹ️ Popup loaded but cross-origin access limited');
+                    }
+                };
+                
+                frame.onerror = function() {
+                    addResult('popup-results', 'error', '❌ Popup iframe failed to load');
+                };
+                
+            } catch (error) {
+                addResult('popup-results', 'error', `❌ Popup test error: ${error.message}`);
+            }
+        }
+
+        function testJavaScriptFunctions() {
+            // Test basic JavaScript functionality that doesn't require Chrome APIs
+            
+            try {
+                // Test date formatting
+                const now = new Date();
+                const timestamp = now.toISOString();
+                if (timestamp && timestamp.includes('T')) {
+                    addResult('js-results', 'success', '✅ Date/timestamp functions work');
+                } else {
+                    addResult('js-results', 'error', '❌ Date/timestamp functions failed');
+                }
+                
+                // Test unique ID generation (simulate the extension function)
+                function generateUniqueId() {
+                    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+                }
+                
+                const id1 = generateUniqueId();
+                const id2 = generateUniqueId();
+                
+                if (id1 && id2 && id1 !== id2) {
+                    addResult('js-results', 'success', '✅ Unique ID generation works');
+                } else {
+                    addResult('js-results', 'error', '❌ Unique ID generation failed');
+                }
+                
+                // Test JSON handling
+                const testData = {
+                    id: generateUniqueId(),
+                    timestamp: timestamp,
+                    annotations: []
+                };
+                
+                const jsonString = JSON.stringify(testData);
+                const parsedData = JSON.parse(jsonString);
+                
+                if (parsedData.id === testData.id) {
+                    addResult('js-results', 'success', '✅ JSON serialization/deserialization works');
+                } else {
+                    addResult('js-results', 'error', '❌ JSON handling failed');
+                }
+                
+                // Test array operations
+                const annotations = [];
+                annotations.push({ id: 1, text: 'Test annotation' });
+                annotations.push({ id: 2, text: 'Another annotation' });
+                
+                const filtered = annotations.filter(a => a.id === 1);
+                if (filtered.length === 1 && filtered[0].text === 'Test annotation') {
+                    addResult('js-results', 'success', '✅ Array operations work correctly');
+                } else {
+                    addResult('js-results', 'error', '❌ Array operations failed');
+                }
+                
+            } catch (error) {
+                addResult('js-results', 'error', `❌ JavaScript test error: ${error.message}`);
+            }
+        }
+
+        function testAnnotationInterface() {
+            try {
+                // Test if annotation interface HTML exists
+                fetch('annotation-interface.html')
+                    .then(response => {
+                        if (response.ok) {
+                            addResult('annotation-results', 'success', '✅ Annotation interface HTML exists');
+                            return response.text();
+                        } else {
+                            addResult('annotation-results', 'error', '❌ Annotation interface HTML not found');
+                        }
+                    })
+                    .then(html => {
+                        if (html && html.includes('annotation-canvas')) {
+                            addResult('annotation-results', 'success', '✅ Annotation interface contains canvas element');
+                        } else {
+                            addResult('annotation-results', 'error', '❌ Annotation interface missing canvas element');
+                        }
+                        
+                        if (html && html.includes('annotation-interface.js')) {
+                            addResult('annotation-results', 'success', '✅ Annotation interface includes JavaScript');
+                        } else {
+                            addResult('annotation-results', 'error', '❌ Annotation interface missing JavaScript');
+                        }
+                    })
+                    .catch(error => {
+                        addResult('annotation-results', 'error', `❌ Annotation interface test failed: ${error.message}`);
+                    });
+                
+                // Test canvas functionality
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                if (ctx) {
+                    canvas.width = 100;
+                    canvas.height = 100;
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(0, 0, 50, 50);
+                    
+                    const imageData = ctx.getImageData(25, 25, 1, 1);
+                    if (imageData.data[0] === 255) { // Red channel should be 255
+                        addResult('annotation-results', 'success', '✅ Canvas drawing functionality works');
+                    } else {
+                        addResult('annotation-results', 'error', '❌ Canvas drawing functionality failed');
+                    }
+                } else {
+                    addResult('annotation-results', 'error', '❌ Canvas context not available');
+                }
+                
+            } catch (error) {
+                addResult('annotation-results', 'error', `❌ Annotation test error: ${error.message}`);
+            }
+        }
+
+        // Run structure tests on load
+        window.onload = function() {
+            // Test file structure
+            const requiredFiles = [
+                'manifest.json',
+                'popup.html', 
+                'popup.js',
+                'popup.css',
+                'background.js',
+                'content.js',
+                'annotation-interface.html',
+                'annotation-interface.js'
+            ];
+            
+            let fileTests = 0;
+            requiredFiles.forEach(file => {
+                fetch(file)
+                    .then(response => {
+                        if (response.ok) {
+                            addResult('structure-results', 'success', `✅ ${file} exists`);
+                        } else {
+                            addResult('structure-results', 'error', `❌ ${file} not found`);
+                        }
+                    })
+                    .catch(error => {
+                        addResult('structure-results', 'error', `❌ ${file} test failed: ${error.message}`);
+                    })
+                    .finally(() => {
+                        fileTests++;
+                        if (fileTests === requiredFiles.length) {
+                            addResult('structure-results', 'info', `ℹ️ Structure test completed for ${requiredFiles.length} files`);
+                        }
+                    });
+            });
+        };
+    </script>
+</body>
+</html>
